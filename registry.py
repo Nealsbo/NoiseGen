@@ -1,0 +1,20 @@
+from generators import SolidColorGenerator, CheckerboardGenerator
+from noises import WorleyNoiseGenerator, WhiteNoiseGenerator
+
+from modifiers import NoModifier, BrightnessModifier, OneMinus
+
+# Maps for active(usable) generator and modifiers
+# Used in NoiseGenApp
+
+GENERATORS = {
+    "Solid Color": SolidColorGenerator,
+    "Checkerboard": CheckerboardGenerator,
+    "WhiteNoise": WhiteNoiseGenerator,
+    "WorleyNoise": WorleyNoiseGenerator,
+}
+
+MODIFIERS = {
+    "None": NoModifier,
+    "Brightness": BrightnessModifier,
+    "OneMinus": OneMinus,
+}
