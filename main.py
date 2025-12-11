@@ -17,7 +17,6 @@ from registry import GENERATORS, MODIFIERS
 #  TODO:
 #    -> Split generate and modifier
 #    -> Remove fixed numers
-#    -> Use cell based algo for worley noise
 #    -> Implement perlin noise
 #    -> Implement set of modifiers
 #    ---> pow(x)
@@ -156,6 +155,9 @@ class NoiseGenApp(QMainWindow):
             ptype = desc["type"]
             default = desc["default"]
 
+            if "options" in desc:
+                options = desc["options"]
+
             if ptype == "int":
                 w = QSpinBox()
                 w.setRange(desc.get("min", 0), desc.get("max", 100))
@@ -174,6 +176,9 @@ class NoiseGenApp(QMainWindow):
             elif ptype == "bool":
                 w = QCheckBox()
                 w.setChecked(default)
+            elif ptype == "list":
+                w = QComboBox()
+                w.addItems(options)
             else:
                 w = QLineEdit(str(default))
 
@@ -199,6 +204,8 @@ class NoiseGenApp(QMainWindow):
                 params[name] = (qcolor.red(), qcolor.green(), qcolor.blue())
             elif isinstance(widget, QCheckBox):
                 params[name] = widget.isChecked()
+            elif isinstance(widget, QComboBox):
+                params[name] = widget.currentText()
             else:
                 try:
                     params[name] = eval(widget.text())
