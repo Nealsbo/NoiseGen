@@ -42,6 +42,7 @@ class WorleyNoiseGenerator(NoiseGenerator):
         self.F2 = None
         self.data = None
         self.points = None
+        self.params = None
         self.modes = {
             "F1" : (lambda f1, f2: f1),
             "F2" : (lambda f1, f2: f2),
@@ -105,6 +106,15 @@ class WorleyNoiseGenerator(NoiseGenerator):
         return self.modes[mode](distances[0], distances[1])
 
     def generate(self, params):
+        if self.params == params:
+            print("Noise already exist with same parameters, no job to generate")
+            return self.data
+        else:
+            print(self.params)
+            print(params)
+            print('========')
+            self.params = params
+
         self.size = params["size"]
         self.grid_size = params["grid_size"]
         self.seed = params["seed"]
@@ -139,13 +149,121 @@ class WorleyNoiseGenerator(NoiseGenerator):
 
 
 
-# TODO: implementation
-class PerlinNoise:
+# TODO: Add octaves
+class PerlinNoiseGenerator(NoiseGenerator):
     def __init__(self):
-        pass
+        self.size = 0
+        self.grid_size = 0
+
+        self.data = None
+        self.vecs = None
+        self.params = None
+
+    def get_ui_schema(self):
+        sizes = [64, 128, 256, 512, 1024, 2048, 4096]
+
+        return {
+            "size": {"type": "choise", "label": "Size", "default": 512, "options": sizes},
+            "grid_size": {"type": "int", "label": "Grid size", "default": 16, "min": 2, "max": 64},
+            "scale": {"type": "float", "label": "Scale", "default": 64.0},
+            "seed": {"type": "int", "label": "Seed", "default": 1},
+            "tileable": {"type": "bool", "label": "Tiling", "default": False},
+        }
+
+    def _dot(self, x1, y1, x2, y2): 
+        return x1*x2 + y1*y2
+    
+    def _nrm(self, x, y):
+        len = math.sqrt(x*x + y*y)
+        xn = x / len
+        yn = y / len
+        return (xn, yn)
+    
+    def _fade(self, v1, v2):
+        x = 6 * math.pow(v1, 5.0) - 15 * math.pow(v1, 4.0) + 10 *  math.pow(v1, 3.0)
+        y = 6 * math.pow(v2, 5.0) - 15 * math.pow(v2, 4.0) + 10 *  math.pow(v2, 3.0)
+        return (x, y)
+    
+    def _lerp(self, t, a1, a2):
+        return a1 + t * (a2 - a1)
+    
+    def _generate_vectors(self):
+        self.vecs = np.random.uniform(-1.0, 1.0, (self.grid_size, self.grid_size, 2))
+        self.grads = np.zeros((self.grid_size * self.grid_size, 2))
+        for j in range(self.grid_size):
+            for i in range(self.grid_size):
+                self.vecs[i, j] = self._nrm(self.vecs[i, j, 0], self.vecs[i, j, 1])
+
+    def _get_vec(self, x, y):
+        xi = x % self.grid_size
+        yi = y % self.grid_size
+        return self.vecs[xi, yi]
+
+    def noise(self, x, y):
+        xpos = x
+        ypos = y
+
+        x0 = np.floor(xpos)
+        y0 = np.floor(ypos)
+        x1 = x0 + 1.0
+        y1 = y0 + 1.0
+
+        sx = xpos - x0
+        sy = ypos - y0
+        
+        # corner vectors of pixel grid cell
+        v00 = self._get_vec(int(x0), int(y0))
+        v01 = self._get_vec(int(x0), int(y1))
+        v10 = self._get_vec(int(x1), int(y0))
+        v11 = self._get_vec(int(x1), int(y1))
+
+        # vector to pixel in grid cell
+        d00 = (sx, sy)
+        d01 = (sx, sy - 1)
+        d10 = (sx - 1, sy)
+        d11 = (sx - 1, sy - 1)
+        
+        h0 = self._dot(d00[0], d00[1], v00[0], v00[1])
+        h1 = self._dot(d01[0], d01[1], v01[0], v01[1])
+        h2 = self._dot(d10[0], d10[1], v10[0], v10[1])
+        h3 = self._dot(d11[0], d11[1], v11[0], v11[1])
+
+        u, v = self._fade(sx, sy)
+
+        l1 = self._lerp(u, h0, h2)
+        l2 = self._lerp(u, h1, h3)
+
+        res = self._lerp(v, l1, l2)
+        return res
         
     def generate(self, params):
-        raise NotImplementedError
+        self.size = params["size"]
+        self.grid_size = params["grid_size"]
+        self.scale = params["scale"]
+        self.seed = params["seed"]
+        self.tileable = params["tileable"]
+
+        np.random.seed(self.seed)
+
+        self._generate_vectors()
+        noise_data = np.zeros((self.size, self.size))
+        u8noise_data = np.zeros((self.size, self.size), dtype=np.uint8)
+
+        for y in range(self.size):
+            for x in range(self.size):
+                
+                val = self.noise(x / self.scale, y / self.scale) * 255
+                noise_data[x, y] = val
+
+        data_min = noise_data.min()
+        data_max = noise_data.max()
+
+        if data_max > data_min:
+            noise_data = (noise_data - data_min) / (data_max - data_min)
+        u8noise_data = (noise_data * 255).astype(np.uint8)
+        self.data = np.stack((u8noise_data, u8noise_data, u8noise_data), axis=-1)
+        return self.data
+
 
     def get_data(self):
-        raise NotImplementedError
+        return self.data

@@ -35,6 +35,7 @@ class NoiseGenApp(QMainWindow):
         self.setGeometry(100, 100, 1280, 720)
         self.scale_percent = 100
         self.current_qimage = None
+        self.last_gen_instance = None
 
         self.generator_classes = GENERATORS
         self.modifier_classes = MODIFIERS
@@ -105,12 +106,15 @@ class NoiseGenApp(QMainWindow):
 
         ## Buttons
         self.btn_generate = QPushButton("Generate")
+        self.btn_modify = QPushButton("Apply Modifier")
         self.btn_save = QPushButton("Save Image")
         self.btn_generate.clicked.connect(self.generate_image)
+        self.btn_modify.clicked.connect(self.apply_modifier)
         self.btn_save.clicked.connect(self.save_image)
 
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(self.btn_generate)
+        btn_layout.addWidget(self.btn_modify)
         btn_layout.addWidget(self.btn_save)
 
         right_layout.addWidget(gen_group)
@@ -217,18 +221,24 @@ class NoiseGenApp(QMainWindow):
         gen_name = self.gen_combo.currentText()
         gen_cls = self.generator_classes[gen_name]
         gen_params = self.collect_params(self.generator_param_widgets)
-        gen_instance = gen_cls()
-        np_img = gen_instance.generate(gen_params)
+        if(self.last_gen_instance is None or not isinstance(self.last_gen_instance, type(gen_cls))):
+            self.last_gen_instance = gen_cls()
+        self.np_img = self.last_gen_instance.generate(gen_params)
 
+        # ndarray to QImage
+        h, w = self.np_img.shape[:2]
+        self.current_qimage = QImage(self.np_img.data, w, h, 3 * w, QImage.Format.Format_RGB888).copy()
+        self.update_view()
+
+    def apply_modifier(self):
         mod_name = self.mod_combo.currentText()
         mod_cls = self.modifier_classes[mod_name]
         mod_params = self.collect_params(self.modifier_param_widgets)
         mod_instance = mod_cls()
-        np_img = mod_instance.apply(np_img, mod_params)
-
-        # ndarray to QImage
-        h, w = np_img.shape[:2]
-        self.current_qimage = QImage(np_img.data, w, h, 3 * w, QImage.Format.Format_RGB888).copy()
+        
+        self.np_img = mod_instance.apply(self.np_img, mod_params)
+        h, w = self.np_img.shape[:2]
+        self.current_qimage = QImage(self.np_img.data, w, h, 3 * w, QImage.Format.Format_RGB888).copy()
         self.update_view()
 
     def update_view(self):

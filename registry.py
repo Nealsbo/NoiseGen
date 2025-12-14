@@ -1,5 +1,5 @@
 from generators import SolidColorGenerator, CheckerboardGenerator
-from noises import WorleyNoiseGenerator, WhiteNoiseGenerator
+from noises import WorleyNoiseGenerator, WhiteNoiseGenerator, PerlinNoiseGenerator
 
 from modifiers import NoModifier, BrightnessModifier, OneMinus
 
@@ -11,6 +11,7 @@ GENERATORS = {
     "Checkerboard": CheckerboardGenerator,
     "WhiteNoise": WhiteNoiseGenerator,
     "WorleyNoise": WorleyNoiseGenerator,
+    "PerlinNoise": PerlinNoiseGenerator,
 }
 
 MODIFIERS = {
