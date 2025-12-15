@@ -149,11 +149,12 @@ class WorleyNoiseGenerator(NoiseGenerator):
 
 
 
-# TODO: Add octaves
+# TODO: Fix scaling by grid size
 class PerlinNoiseGenerator(NoiseGenerator):
     def __init__(self):
         self.size = 0
         self.grid_size = 0
+        self.tablesize = 0
 
         self.data = None
         self.vecs = None
@@ -164,10 +165,9 @@ class PerlinNoiseGenerator(NoiseGenerator):
 
         return {
             "size": {"type": "choise", "label": "Size", "default": 512, "options": sizes},
-            "grid_size": {"type": "int", "label": "Grid size", "default": 16, "min": 2, "max": 64},
+            "grid_size": {"type": "int", "label": "Grid size", "default": 16, "min": 2, "max": 256},
             "octaves": {"type": "int", "label": "Octaves", "default": 4, "min": 1, "max": 8},
             "persistance": {"type": "float", "label": "Persistance", "default": 1.0},
-            "scale": {"type": "float", "label": "Scale", "default": 64.0},
             "seed": {"type": "int", "label": "Seed", "default": 1},
             "tileable": {"type": "bool", "label": "Tiling", "default": False},
         }
@@ -190,23 +190,38 @@ class PerlinNoiseGenerator(NoiseGenerator):
         return a1 + t * (a2 - a1)
 
     def _generate_vectors(self):
-        self.vecs = np.random.uniform(-1.0, 1.0, (self.grid_size, self.grid_size, 2))
-        self.grads = np.zeros((self.grid_size * self.grid_size, 2))
+        step = math.pi * 2.0 / self.tablesize
+        val = 0.0
+        #self.vecs = np.random.uniform(-1.0, 1.0, (self.grid_size, self.grid_size, 2))
+        self.grads = np.zeros((self.tablesize, 2))
         for j in range(self.grid_size):
             for i in range(self.grid_size):
-                self.vecs[i, j] = self._nrm(self.vecs[i, j, 0], self.vecs[i, j, 1])
+                #self.vecs[i, j] = self._nrm(self.vecs[i, j, 0], self.vecs[i, j, 1])
+
+                x = math.cos(val)
+                y = math.sin(val)
+                self.grads[i + j * self.grid_size] = (x, y)
+                val += step
+
+        self.table = np.arange(0, self.tablesize, 1)
+        np.random.shuffle(self.table)
+        #self.table.reshape((self.grid_size, self.grid_size))
 
     def _get_vec(self, x, y):
         xi = x % self.grid_size
         yi = y % self.grid_size
-        return self.vecs[xi, yi]
+
+        index = self.table[xi + yi * self.grid_size]
+
+        return self.grads[index]
+        #return self.vecs[xi, yi]
 
     def noise(self, x, y):
         xpos = x
         ypos = y
 
-        x0 = np.floor(xpos)
-        y0 = np.floor(ypos)
+        x0 = int(np.floor(xpos)) % self.tablesize
+        y0 = int(np.floor(ypos)) % self.tablesize
         x1 = x0 + 1.0
         y1 = y0 + 1.0
 
@@ -241,7 +256,7 @@ class PerlinNoiseGenerator(NoiseGenerator):
     def octave_noise(self, x, y):
         total = 0.0
         amplitude = self.persistance
-        frequency = 1.0 / self.scale
+        frequency = 1.0 / self.size * self.grid_size
         for i in range(self.octaves):
             total += amplitude * self.noise(x * frequency, y * frequency)
             amplitude *= 0.5
@@ -254,9 +269,9 @@ class PerlinNoiseGenerator(NoiseGenerator):
         self.grid_size = params["grid_size"]
         self.octaves = params["octaves"]
         self.persistance = params["persistance"]
-        self.scale = params["scale"]
         self.seed = params["seed"]
         self.tileable = params["tileable"]
+        self.tablesize = self.grid_size * self.grid_size
 
         np.random.seed(self.seed)
 
