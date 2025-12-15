@@ -5,7 +5,7 @@ from PIL import Image
 from base import NoiseGenerator
 
 
-    
+
 class WhiteNoiseGenerator(NoiseGenerator):
     def __init__(self):
         self.data = None
@@ -16,7 +16,7 @@ class WhiteNoiseGenerator(NoiseGenerator):
             "size": {"type": "choise", "label": "Size", "default": 512, "options": sizes},
             "colored": {"type": "bool", "label": "IsColored", "default": False},
         }
-        
+
     def generate(self, params):
         self.size = params["size"]
         self.colored = params["colored"]
@@ -48,10 +48,10 @@ class WorleyNoiseGenerator(NoiseGenerator):
             "F2" : (lambda f1, f2: f2),
             "F2 + F1" : (lambda f1, f2: f2 + f1),
             "F2 - F1" : (lambda f1, f2: f2 - f1),
-            "F2 * F1" : (lambda f1, f2: f2 * f1), 
+            "F2 * F1" : (lambda f1, f2: f2 * f1),
             "F2 / F1" : (lambda f1, f2: f2 / f1)
         }
-    
+
     def get_ui_schema(self):
         sizes = [64, 128, 256, 512, 1024, 2048, 4096]
 
@@ -72,18 +72,18 @@ class WorleyNoiseGenerator(NoiseGenerator):
                 points[i, j, 0] = x + i
                 points[i, j, 1] = y + j
         self.points = points
-    
+
     def _dist_square(self, x1, y1, x2, y2):
         dx = x2 - x1
         dy = y2 - y1
         return math.sqrt(dx*dx + dy*dy)
-    
+
     def _get_dists(self, x, y, n=2) -> np.array:
         dists = np.full(9, np.inf)
 
         cell_x = int(np.floor(x)) % self.grid_size
         cell_y = int(np.floor(y)) % self.grid_size
-        
+
         for dx in range(-1, 2):
             for dy in range(-1, 2):
                 near_x = (cell_x + dx) % self.grid_size
@@ -143,7 +143,7 @@ class WorleyNoiseGenerator(NoiseGenerator):
 
     def get_data(self):
         return self.data
-    
+
     def to_image(self):
         return Image.fromarray(self.data)
 
@@ -165,28 +165,30 @@ class PerlinNoiseGenerator(NoiseGenerator):
         return {
             "size": {"type": "choise", "label": "Size", "default": 512, "options": sizes},
             "grid_size": {"type": "int", "label": "Grid size", "default": 16, "min": 2, "max": 64},
+            "octaves": {"type": "int", "label": "Octaves", "default": 4, "min": 1, "max": 8},
+            "persistance": {"type": "float", "label": "Persistance", "default": 1.0},
             "scale": {"type": "float", "label": "Scale", "default": 64.0},
             "seed": {"type": "int", "label": "Seed", "default": 1},
             "tileable": {"type": "bool", "label": "Tiling", "default": False},
         }
 
-    def _dot(self, x1, y1, x2, y2): 
+    def _dot(self, x1, y1, x2, y2):
         return x1*x2 + y1*y2
-    
+
     def _nrm(self, x, y):
         len = math.sqrt(x*x + y*y)
         xn = x / len
         yn = y / len
         return (xn, yn)
-    
+
     def _fade(self, v1, v2):
         x = 6 * math.pow(v1, 5.0) - 15 * math.pow(v1, 4.0) + 10 *  math.pow(v1, 3.0)
         y = 6 * math.pow(v2, 5.0) - 15 * math.pow(v2, 4.0) + 10 *  math.pow(v2, 3.0)
         return (x, y)
-    
+
     def _lerp(self, t, a1, a2):
         return a1 + t * (a2 - a1)
-    
+
     def _generate_vectors(self):
         self.vecs = np.random.uniform(-1.0, 1.0, (self.grid_size, self.grid_size, 2))
         self.grads = np.zeros((self.grid_size * self.grid_size, 2))
@@ -210,7 +212,7 @@ class PerlinNoiseGenerator(NoiseGenerator):
 
         sx = xpos - x0
         sy = ypos - y0
-        
+
         # corner vectors of pixel grid cell
         v00 = self._get_vec(int(x0), int(y0))
         v01 = self._get_vec(int(x0), int(y1))
@@ -222,7 +224,7 @@ class PerlinNoiseGenerator(NoiseGenerator):
         d01 = (sx, sy - 1)
         d10 = (sx - 1, sy)
         d11 = (sx - 1, sy - 1)
-        
+
         h0 = self._dot(d00[0], d00[1], v00[0], v00[1])
         h1 = self._dot(d01[0], d01[1], v01[0], v01[1])
         h2 = self._dot(d10[0], d10[1], v10[0], v10[1])
@@ -235,10 +237,23 @@ class PerlinNoiseGenerator(NoiseGenerator):
 
         res = self._lerp(v, l1, l2)
         return res
-        
+
+    def octave_noise(self, x, y):
+        total = 0.0
+        amplitude = self.persistance
+        frequency = 1.0 / self.scale
+        for i in range(self.octaves):
+            total += amplitude * self.noise(x * frequency, y * frequency)
+            amplitude *= 0.5
+            frequency *= 2.0
+
+        return total
+
     def generate(self, params):
         self.size = params["size"]
         self.grid_size = params["grid_size"]
+        self.octaves = params["octaves"]
+        self.persistance = params["persistance"]
         self.scale = params["scale"]
         self.seed = params["seed"]
         self.tileable = params["tileable"]
@@ -251,8 +266,8 @@ class PerlinNoiseGenerator(NoiseGenerator):
 
         for y in range(self.size):
             for x in range(self.size):
-                
-                val = self.noise(x / self.scale, y / self.scale) * 255
+
+                val = self.octave_noise(x, y) * 255
                 noise_data[x, y] = val
 
         data_min = noise_data.min()
