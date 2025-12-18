@@ -8,6 +8,7 @@ Noise and image generation
 - Noise generator:
     - White noise
     - Worley noise
+    - Perlin noise
 - Image generator:
     - Color
     - Checker board
@@ -15,6 +16,8 @@ Noise and image generation
 Post generator image modifier
 - Modifiers for generated images:
     - Brightness
+    - OneMinus
+    - Power
 
 # Usage
 ```
