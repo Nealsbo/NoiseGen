@@ -22,7 +22,7 @@ python main.py
 ```
 
 # Dependecies
-At this point project uses Qt(PySide6) and numpy
+At this point project uses numpy, Qt(PyQt6) and PIL(pillow)
 
 # Screeshot
 ![Screenshot](https://github.com/Nealsbo/NoiseGen/blob/master/Screenshot.png)

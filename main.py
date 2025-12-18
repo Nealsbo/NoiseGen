@@ -1,6 +1,5 @@
 import sys
 import numpy as np
-from PIL import Image
 
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
@@ -17,10 +16,7 @@ from registry import GENERATORS, MODIFIERS
 #  TODO:
 #    -> Split generate and modifier
 #    -> Remove fixed numers
-#    -> Implement perlin noise
 #    -> Implement set of modifiers
-#    ---> pow(x)
-#    ---> 1 - x
 #    ---> clamp(min, max)
 #    ---> colormap
 #

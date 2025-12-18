@@ -36,3 +36,19 @@ class OneMinus(NoiseModifier):
     def apply(self, image: np.ndarray, params: dict) -> np.ndarray:
         fx = lambda x: 255-x
         return fx(image)
+
+
+
+class PowerOfX(NoiseModifier):
+    def get_ui_schema(self):
+        return {
+            "value": {"type": "float", "label": "Exponent", "default": 2.0, "min": 0.0, "max": 10.0, "step": 0.1}
+        }
+
+    def fx(self, x, y):
+        xf = x / 255.0
+        res = np.pow(xf, y) * 255
+        return np.array(res).astype(np.uint8)
+
+    def apply(self, image: np.ndarray, params: dict) -> np.ndarray:
+        return self.fx(image, params["value"])

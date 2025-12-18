@@ -149,7 +149,7 @@ class WorleyNoiseGenerator(NoiseGenerator):
 
 
 
-# TODO: Fix scaling by grid size
+# TODO: Fix tiling
 class PerlinNoiseGenerator(NoiseGenerator):
     def __init__(self):
         self.size = 0
