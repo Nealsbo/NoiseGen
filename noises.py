@@ -154,7 +154,7 @@ class PerlinNoiseGenerator(NoiseGenerator):
     def __init__(self):
         self.size = 0
         self.grid_size = 0
-        self.tablesize = 0
+        self.tablesize = 256
 
         self.data = None
         self.vecs = None
@@ -191,42 +191,24 @@ class PerlinNoiseGenerator(NoiseGenerator):
 
     def _generate_vectors(self):
         step = math.pi * 2.0 / self.tablesize
-        val = 0.0
-        #self.vecs = np.random.uniform(-1.0, 1.0, (self.grid_size, self.grid_size, 2))
-        self.grads = np.zeros((self.tablesize, 2))
-        for j in range(self.grid_size):
-            for i in range(self.grid_size):
-                #self.vecs[i, j] = self._nrm(self.vecs[i, j, 0], self.vecs[i, j, 1])
-
-                x = math.cos(val)
-                y = math.sin(val)
-                self.grads[i + j * self.grid_size] = (x, y)
-                val += step
-
-        self.table = np.arange(0, self.tablesize, 1)
+        angles = np.arange(self.tablesize) * step
+        self.grads = np.stack((np.cos(angles), np.sin(angles)), axis=1)
+        self.table = np.arange(self.tablesize, dtype=int)
+        self.table = np.concatenate((self.table, self.table))
         np.random.shuffle(self.table)
-        #self.table.reshape((self.grid_size, self.grid_size))
 
     def _get_vec(self, x, y):
-        xi = x % self.grid_size
-        yi = y % self.grid_size
-
-        index = self.table[xi + yi * self.grid_size]
-
+        index = self.table[self.table[x] + y]
         return self.grads[index]
-        #return self.vecs[xi, yi]
 
     def noise(self, x, y):
-        xpos = x
-        ypos = y
+        x0 = int(np.floor(x)) % 256
+        y0 = int(np.floor(y)) % 256
+        x1 = (x0 + 1) % 256
+        y1 = (y0 + 1) % 256
 
-        x0 = int(np.floor(xpos)) % self.tablesize
-        y0 = int(np.floor(ypos)) % self.tablesize
-        x1 = x0 + 1.0
-        y1 = y0 + 1.0
-
-        sx = xpos - x0
-        sy = ypos - y0
+        sx = x - np.floor(x)
+        sy = y - np.floor(y)
 
         # corner vectors of pixel grid cell
         v00 = self._get_vec(int(x0), int(y0))
@@ -257,6 +239,7 @@ class PerlinNoiseGenerator(NoiseGenerator):
         total = 0.0
         amplitude = self.persistance
         frequency = 1.0 / self.size * self.grid_size
+
         for i in range(self.octaves):
             total += amplitude * self.noise(x * frequency, y * frequency)
             amplitude *= 0.5
@@ -271,7 +254,6 @@ class PerlinNoiseGenerator(NoiseGenerator):
         self.persistance = params["persistance"]
         self.seed = params["seed"]
         self.tileable = params["tileable"]
-        self.tablesize = self.grid_size * self.grid_size
 
         np.random.seed(self.seed)
 
@@ -281,8 +263,8 @@ class PerlinNoiseGenerator(NoiseGenerator):
 
         for y in range(self.size):
             for x in range(self.size):
-
-                val = self.octave_noise(x, y) * 255
+                val = self.octave_noise(x, y)
+                #val = (val + 1.0) * 0.5
                 noise_data[x, y] = val
 
         data_min = noise_data.min()
