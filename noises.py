@@ -43,13 +43,17 @@ class WorleyNoiseGenerator(NoiseGenerator):
         self.data = None
         self.points = None
         self.params = None
+        self.value = 1.0
         self.modes = {
             "F1" : (lambda f1, f2: f1),
             "F2" : (lambda f1, f2: f2),
             "F2 + F1" : (lambda f1, f2: f2 + f1),
             "F2 - F1" : (lambda f1, f2: f2 - f1),
             "F2 * F1" : (lambda f1, f2: f2 * f1),
-            "F2 / F1" : (lambda f1, f2: f2 / f1)
+            "F2 / F1" : (lambda f1, f2: f2 / f1),
+            "sqrt(F2 * F1)" : (lambda f1, f2: np.sqrt(f2 * f1)),
+            "sin(F1 * X)" : (lambda f1, f2: np.sin(f1 * self.value)),
+            "cos(F1 * X)" : (lambda f1, f2: np.cos(f1 * self.value))
         }
 
     def get_ui_schema(self):
@@ -61,6 +65,7 @@ class WorleyNoiseGenerator(NoiseGenerator):
             "seed": {"type": "int", "label": "Seed", "default": 1},
             "tileable": {"type": "bool", "label": "Tiling", "default": False},
             "mode" : {"type": "list", "label": "Result modes", "default": "F1", "options": self.modes.keys()},
+            "value": {"type": "float", "label": "Mode value(X)", "default": 16, "min": 0.01, "max": 1000.0},
         }
 
     def _generate_points(self):
@@ -102,17 +107,12 @@ class WorleyNoiseGenerator(NoiseGenerator):
         scaled_y = y * (self.grid_size / self.size)
 
         distances = self._get_dists(scaled_x, scaled_y, n)
-        #return distances[0]
         return self.modes[mode](distances[0], distances[1])
 
     def generate(self, params):
         if self.params == params:
-            print("Noise already exist with same parameters, no job to generate")
             return self.data
         else:
-            print(self.params)
-            print(params)
-            print('========')
             self.params = params
 
         self.size = params["size"]
@@ -120,6 +120,7 @@ class WorleyNoiseGenerator(NoiseGenerator):
         self.seed = params["seed"]
         self.tileable = params["tileable"]
         self.mode = params["mode"]
+        self.value = params["value"]
         n = 2
 
         np.random.seed(self.seed)

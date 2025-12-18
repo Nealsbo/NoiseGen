@@ -14,7 +14,6 @@ from registry import GENERATORS, MODIFIERS
 ################
 #
 #  TODO:
-#    -> Split generate and modifier
 #    -> Remove fixed numers
 #    -> Implement set of modifiers
 #    ---> clamp(min, max)
