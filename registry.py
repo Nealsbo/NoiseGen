@@ -1,4 +1,4 @@
-from generators import SolidColorGenerator, CheckerboardGenerator
+from generators import SolidColorGenerator, CheckerboardGenerator, GradientGenerator
 from noises import WorleyNoiseGenerator, WhiteNoiseGenerator, PerlinNoiseGenerator
 
 from modifiers import NoModifier, BrightnessModifier, OneMinus, PowerOfX
@@ -7,16 +7,17 @@ from modifiers import NoModifier, BrightnessModifier, OneMinus, PowerOfX
 # Used in NoiseGenApp
 
 GENERATORS = {
-    "Solid Color": SolidColorGenerator,
+    "Solid Color":  SolidColorGenerator,
     "Checkerboard": CheckerboardGenerator,
-    "WhiteNoise": WhiteNoiseGenerator,
-    "WorleyNoise": WorleyNoiseGenerator,
-    "PerlinNoise": PerlinNoiseGenerator,
+    "Gradient":     GradientGenerator,
+    "WhiteNoise":   WhiteNoiseGenerator,
+    "WorleyNoise":  WorleyNoiseGenerator,
+    "PerlinNoise":  PerlinNoiseGenerator,
 }
 
 MODIFIERS = {
-    "None": NoModifier,
+    "None":       NoModifier,
     "Brightness": BrightnessModifier,
-    "OneMinus": OneMinus,
-    "PowerOfX": PowerOfX,
+    "OneMinus":   OneMinus,
+    "PowerOfX":   PowerOfX,
 }

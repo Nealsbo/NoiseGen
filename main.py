@@ -185,7 +185,7 @@ class NoiseGenApp(QMainWindow):
             widget_store[param_name] = w
 
     def pick_color(self, button, store, param_name):
-        color = QColorDialog.getColor(button.selected_color, self, "Цвет")
+        color = QColorDialog.getColor(button.selected_color, self, "Color")
         if color.isValid():
             button.selected_color = color
             store[param_name + "_color"] = color

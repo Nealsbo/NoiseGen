@@ -16,7 +16,7 @@ class NoiseGenerator(ABC):
         {
             "param_name1": {
                 "type": "int" | "float" | "color" | "bool" | "choice",
-                "label": "Человекочитаемое имя",
+                "label": "Name",
                 "default": ...,
                 "min"/"max"/"options" (optional)
             },
