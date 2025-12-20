@@ -40,7 +40,7 @@ class CheckerboardGenerator(NoiseGenerator):
         return img
 
 
-# TODO: Fix using direction of gradient
+
 class GradientGenerator(NoiseGenerator):
     def get_ui_schema(self):
         sizes = [64, 128, 256, 512, 1024, 2048, 4096]
@@ -57,10 +57,22 @@ class GradientGenerator(NoiseGenerator):
         r1, g1, b1 = params["color1"]
         r2, g2, b2 = params["color2"]
         dir = params["direction"]
-        rrange = np.linspace(r1, r2, size, dtype=np.uint8)
-        grange = np.linspace(g1, g2, size, dtype=np.uint8)
-        brange = np.linspace(b1, b2, size, dtype=np.uint8)
-        color_line = np.stack((rrange, grange, brange), axis=-1)
-        print(color_line.shape)
-        return np.full((size, size, 3), color_line, dtype=np.uint8)
-
+        if dir == "Left->Right" or dir == "Top->Bottom":
+            rrange = np.linspace(r1, r2, size, dtype=np.uint8)
+            grange = np.linspace(g1, g2, size, dtype=np.uint8)
+            brange = np.linspace(b1, b2, size, dtype=np.uint8)
+        else:
+            rrange = np.linspace(r2, r1, size, dtype=np.uint8)
+            grange = np.linspace(g2, g1, size, dtype=np.uint8)
+            brange = np.linspace(b2, b1, size, dtype=np.uint8)
+        
+        if dir == "Left->Right" or dir == "Right->Left":
+            color_line = np.stack((rrange, grange, brange), axis=-1)
+            res = np.full((size, size, 3), color_line, dtype=np.uint8)
+            return res
+            
+        else:
+            color_line = np.stack((rrange, grange, brange), axis=-1)
+            res = np.full((size, size, 3), color_line, dtype=np.uint8)
+            res = res.swapaxes(0,1)
+            return res

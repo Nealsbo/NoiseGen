@@ -21,6 +21,21 @@ from registry import GENERATORS, MODIFIERS
 #
 ################
 
+class ImageLabel(QLabel):
+    def __init__(self):
+        super().__init__()
+
+        pass
+
+    def mousePressEvent(self, ev):
+        return super().mousePressEvent(ev)
+    
+    def mouseMoveEvent(self, ev):
+        return super().mouseMoveEvent(ev)
+    
+    def dragMoveEvent(self, a0):
+        return super().dragMoveEvent(a0)
+
 
 
 class NoiseGenApp(QMainWindow):
@@ -222,7 +237,7 @@ class NoiseGenApp(QMainWindow):
 
         # ndarray to QImage
         h, w = self.np_img.shape[:2]
-        self.current_qimage = QImage(self.np_img.data, w, h, 3 * w, QImage.Format.Format_RGB888).copy()
+        self.current_qimage = QImage(self.np_img.data.tobytes(), w, h, 3 * w, QImage.Format.Format_RGB888).copy()
         self.update_view()
 
     def apply_modifier(self):
